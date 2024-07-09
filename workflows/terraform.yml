@@ -16,14 +16,14 @@ name: "Vprofile IAC"
 on:
   push:
     branches:
-    - '*'
+    - main
+    - stage
     paths:
     - terraform/**
-    - .github/workflows/vprofile-iac.yml
+    # - .github/workflows/vprofile-iac.yml
   pull_request:
     branches:
     - main
-    - stage
     paths:
     - terraform/**
 
@@ -39,7 +39,7 @@ on:
 # Return Value:
 # This section does not return a value but sets up environment variables that will be used in the workflow steps.
 env:
-  AWS_DEFAULT_REGION: us-east-1
+  AWS_REGION: us-east-1
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
@@ -76,7 +76,7 @@ jobs:
       #with:
       #     terraform_version: 1.6.3
 
-    - name: Terraform Init
+    - name: Terraform init
       id: init
       run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
 
