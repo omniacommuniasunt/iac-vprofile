@@ -20,7 +20,7 @@ on:
     - stage
     paths:
     - terraform/**
-    # - .github/workflows/vprofile-iac.yml
+    - .github/workflows/vprofile-iac.yml
   pull_request:
     branches:
     - main
