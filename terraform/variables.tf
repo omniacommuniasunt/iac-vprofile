@@ -9,7 +9,5 @@ variable "clusterName" {
   type        = string
   default     = "gitopsactions"
 } 
+
 ##
-######
-######
-######
