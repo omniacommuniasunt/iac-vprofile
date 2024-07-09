@@ -42,7 +42,7 @@ env:
     AWS_DEFAULT_REGION: us-east-1
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    BUCKET_TF_STATE: ${{secrets.BUCKET_TF_STATE}}
+    BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
     EKS_CLUSTER: gitopsactions
 
 jobs:
@@ -58,7 +58,7 @@ jobs:
         #
         # Return Value:
         # This job does not return a value but performs a series of steps to deploy infrastructure using Terraform.
-        name: maeia
+        name: "Apply terraform code changes"
         runs-on: ubuntu-latest
         defaults:
             run:
