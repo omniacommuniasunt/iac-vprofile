@@ -1,45 +1,20 @@
-name: "Vprofile IAC"
+name: "Terraform Apply"
 
-# This section defines the events that trigger the workflow.
-# The workflow is triggered on push and pull request events to specific branches and paths.
-# 
-# Parameters:
-# - push: Specifies the branches and paths that trigger the workflow when code is pushed.
-#   - branches: A list of branches that trigger the workflow on push events.
-#   - paths: A list of paths that trigger the workflow on push events.
-# - pull_request: Specifies the branches and paths that trigger the workflow on pull request events.
-#   - branches: A list of branches that trigger the workflow on pull request events.
-#   - paths: A list of paths that trigger the workflow on pull request events.
-# 
-# Return Value:
-# This section does not return a value but sets up the conditions under which the workflow is triggered.
 on:
   push:
     branches:
-    - main
-    - stage
+      - '*'
     paths:
-    - terraform/**
-    # - .github/workflows/vprofile-iac.yml
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
   pull_request:
     branches:
-    - main
+      - main
     paths:
-    - terraform/**
+      - 'terraform/**'
 
-# This section sets up environment variables that will be used throughout the workflow.
-# 
-# Parameters:
-# - AWS_DEFAULT_REGION: The default AWS region to be used for AWS CLI commands.
-# - AWS_ACCESS_KEY_ID: The AWS access key ID, retrieved from GitHub secrets.
-# - AWS_SECRET_ACCESS_KEY: The AWS secret access key, retrieved from GitHub secrets.
-# - BUCKET_TF_STATE: The name of the S3 bucket where Terraform state files are stored, retrieved from GitHub secrets.
-# - EKS_CLUSTER: The name of the EKS cluster to be used.
-# 
-# Return Value:
-# This section does not return a value but sets up environment variables that will be used in the workflow steps.
-env:
-  AWS_REGION: us-east-1
+env:s
+  AWS_DEFAULT_REGION: us-east-1
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
@@ -47,17 +22,6 @@ env:
 
 jobs:
   terraform:
-    # This job is designed to automate the deployment of infrastructure as code (IAC) using Terraform.
-    # It triggers on push and pull request events to specific branches and paths, and sets up necessary environment variables for AWS.
-    #
-    # Parameters:
-    # - name: A descriptive name for the job.
-    # - runs-on: Specifies the type of runner to run the job on. In this case, it uses the latest version of Ubuntu.
-    # - defaults: Sets default values for the job's steps.
-    #   - run: Specifies the shell to be used and the working directory for the steps.
-    #
-    # Return Value:
-    # This job does not return a value but performs a series of steps to deploy infrastructure using Terraform.
     name: "Apply terraform code changes"
     runs-on: ubuntu-latest
     defaults:
@@ -65,59 +29,27 @@ jobs:
         shell: bash
         working-directory: ./terraform
 
-
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-      #with:
-      #     terraform_version: 1.6.3
+      - name: Terraform Init
+        run: terraform init -backend-config="bucket=${{ env.BUCKET_TF_STATE }}"
 
-    - name: Terraform init
-      id: init
-      run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
+      - name: Terraform Format
+        run: terraform fmt -check
 
-      #- name: Terraform Format
-    - name: Terraform format
-      id: fmt
-      run: terraform fmt -check
-    # This step runs the 'terraform validate' command to check the syntax and validity of the Terraform configuration files.
-    #
-    # Parameters:
-    # - name: A descriptive name for the step.
-    # - id: A unique identifier for the step, which can be used in subsequent steps.
-    # - run: The command to be executed. In this case, it runs 'terraform validate' to ensure the configuration files are syntactically valid and internally consistent.
-    #
-    # Return Value:
-    # This step does not return a value but ensures that the Terraform configuration files are valid. If the validation fails, the workflow will stop, preventing invalid configurations from being applied.
-    - name: Terraform validate
-      id: validate
-      run: terraform validate
+      - name: Terraform Validate
+        run: terraform validate
 
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false -out planfile
+        continue-on-error: true
 
-    # This step runs the 'terraform plan' command to create an execution plan.
-    # It helps in understanding what changes will be made by the Terraform scripts without actually applying them.
-    #
-    # Parameters:
-    # - name: A descriptive name for the step.
-    # - id: A unique identifier for the step, which can be used in subsequent steps.
-    # - run: The command to be executed. In this case, it runs 'terraform plan' with the following options:
-    #   -no-color: Disables colored output, making it easier to read in logs.
-    #   -input=false: Prevents Terraform from asking for input during the plan phase.
-    #   -out pla: Specifies the output file where the plan will be saved.
-    #
-    # Return Value:
-    # This step does not return a value but generates a plan file that can be used in subsequent steps for applying the changes.
-    - name: Terraform plan
-      id: plan
-      run: terraform plan -no-color -input=false -out planfile
-      continue-on-error: true
-
-    - name: Terraform plan status
-      if: steps.plan.outcome == 'failure'
-      run: exit 1
-
-######################################
+      - name: Terraform Plan Status
+        if: ${{ failure() }}
+        run: exit 1
