@@ -43,7 +43,16 @@ jobs:
         run: terraform init -backend-config="bucket=${{ env.BUCKET_TF_STATE }}"
 
       - name: Terraform Format Check
-        run: terraform fmt -check -recursive
+        id: fmt
+        run: |
+          terraform fmt -check -recursive
+        continue-on-error: true
+  
+      - name: Terraform Format Check Result
+        if: failure()
+        run: |
+          echo "Terraform format check failed"
+          exit 1
 
       - name: Terraform Validate
         run: terraform validate
